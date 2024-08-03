@@ -6,25 +6,18 @@ import time
 import pyrebase
 import tensorflow as tf
 import os
+import toml
 
-# Firebase configuration
-firebaseConfig = {
-    "apiKey": "AIzaSyAvWPPLyYWYoolAFboKTkvqqCNJNnYm01E",
-    "authDomain": "fish-8f5de.firebaseapp.com",
-    "databaseURL": "https://fish-8f5de-default-rtdb.firebaseio.com",
-    "projectId": "fish-8f5de",
-    "storageBucket": "fish-8f5de.appspot.com",
-    "messagingSenderId": "860387876032",
-    "appId": "1:860387876032:web:4ff9ec596963a67f76a125",
-    "measurementId": "G-HQYHLKH6TT"
-}
+# Load Firebase configuration from secrets.toml
+config = toml.load('secrets.toml')
+firebaseConfig = config['firebase']
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 
 # Load your pre-trained model
-model_path = 'path_to_your_model/fish_model.h5'  # Update this path
+model_path = 'C:\Users\SSNiTHAR\Desktop\ITBIN-2110-0126/modelfish.h5'  # Update this path
 if os.path.isfile(model_path):
     model = tf.keras.models.load_model(model_path)
 else:
@@ -143,6 +136,7 @@ else:
         signup()
     elif option == "Login":
         login()
+
 
 
 

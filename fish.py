@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import time
 
 # Load your CNN model
-model_path = 'C:/Users/SSNiTHAR/Desktop/ITBIN-2110-0126/test_model.h5'
+model_path = 'C:\Users\SSNiTHAR\Documents\ITBIN-2110-0126\test_model.h5'
 
 if os.path.isfile(model_path):
     try:

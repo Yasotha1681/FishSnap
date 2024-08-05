@@ -4,10 +4,9 @@ import numpy as np
 import tensorflow as tf
 import os
 import matplotlib.pyplot as plt
-import time
 
 # Load your CNN model
-model_path = 'C:\Users\SSNiTHAR\Documents\ITBIN-2110-0126\test_model.h5'
+model_path = 'C:/Users/SSNiTHAR/Desktop/ITBIN-2110-0126/test_model.h5'
 
 if os.path.isfile(model_path):
     try:
@@ -19,7 +18,7 @@ else:
     st.error(f"Model file not found: {model_path}")
 
 def preprocess_image(image):
-    image = image.resize((224, 224))  # Resize to the size your model expects
+    image = image.resize((32, 32))  # Resize to the size your model expects
     image = np.array(image) / 255.0   # Normalize the image
     image = np.expand_dims(image, axis=0)  # Add batch dimension
     return image
@@ -28,12 +27,6 @@ def identify_fish(image):
     processed_image = preprocess_image(image)
     predictions = model.predict(processed_image)
     class_names = ["Fish1", "Fish2", "Fish3"]  # Replace with your class names
-    
-    # Ensure the number of class names matches the model output
-    if len(predictions[0]) != len(class_names):
-        st.error("Model output size does not match the number of class names.")
-        return "Unknown"
-
     predicted_class = class_names[np.argmax(predictions)]
     return predicted_class
 
@@ -43,7 +36,7 @@ st.title("Fish Identification App")
 # Sidebar
 with st.sidebar:
     st.header("Options")
-    option = st.selectbox("Choose an option", ["Upload Image", "Visualize Data", "Show Progress"])
+    option = st.selectbox("Choose an option", ["Upload Image", "Visualize Data"])
 
 # Containers
 container1 = st.container()
@@ -57,8 +50,11 @@ if option == "Upload Image":
             st.image(image, caption='Uploaded Fish Image', use_column_width=True)
 
             # Identify the fish
-            fish_name = identify_fish(image)
-            st.write(f"Identified Fish: {fish_name}")
+            if 'model' in globals():
+                fish_name = identify_fish(image)
+                st.write(f"Identified Fish: {fish_name}")
+            else:
+                st.error("Model not loaded. Check the model path.")
 
             st.success("Image uploaded and identified successfully!")
 
@@ -71,20 +67,6 @@ elif option == "Visualize Data":
         ax.hist(data, bins=20)
         st.pyplot(fig)
 
-elif option == "Show Progress":
-    with container1:
-        st.header("Progress and Status")
-        st.subheader("Progress Bar")
-        progress_bar = st.progress(0)
-        for i in range(100):
-            time.sleep(0.1)
-            progress_bar.progress(i + 1)
-        st.success("Task completed!")
-
-        st.subheader("Status Messages")
-        st.info("Information message")
-        st.warning("Warning message")
-        st.error("Error message")
 
 
     

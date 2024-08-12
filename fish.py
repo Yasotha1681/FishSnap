@@ -4,8 +4,14 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-# Load a pre-trained model (e.g., MobileNetV2)
-model = tf.keras.applications.MobileNetV2(weights='imagenet')
+def load_model():
+    try:
+        # Load a pre-trained model (e.g., MobileNetV2)
+        model = tf.keras.applications.MobileNetV2(weights='imagenet')
+        return model
+    except OSError as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
 def preprocess_image(image):
     image = image.resize((224, 224))  # Resize image to match model input
@@ -14,7 +20,7 @@ def preprocess_image(image):
     image_array = np.expand_dims(image_array, axis=0)
     return image_array
 
-def identify_fish(image):
+def identify_animal(image, model):
     processed_image = preprocess_image(image)
     predictions = model.predict(processed_image)
     decoded_predictions = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=5)[0]
@@ -29,7 +35,7 @@ def generate_chart(predictions):
     fig, ax = plt.subplots()
     ax.barh(categories, probabilities, color='skyblue')
     ax.set_xlabel('Probability')
-    ax.set_title('Top Predicted Fish Species')
+    ax.set_title('Top Predicted Animals/Birds')
     
     return fig
 
@@ -52,15 +58,18 @@ def main():
                 image = Image.open(uploaded_file)
                 st.image(image, caption='Uploaded Image', use_column_width=True)
                 
-                # Display progress and status
-                with st.spinner("Identifying the fish..."):
-                    predictions = identify_fish(image)
-                    fish_name = predictions[0][1]  # Get the name of the top prediction
-                    st.write(f"Identified Fish: {fish_name}")
-                    
-                    # Display the chart with top predictions
-                    fig = generate_chart(predictions)
-                    st.pyplot(fig)
+                # Load the model
+                model = load_model()
+                if model is not None:
+                    # Display progress and status
+                    with st.spinner("Identifying the fish..."):
+                        predictions = identify_animal(image, model)
+                        fish_name = predictions[0][1]  # Get the name of the top prediction
+                        st.write(f"Identified Fish: {fish_name}")
+                        
+                        # Display the chart with top predictions
+                        fig = generate_chart(predictions)
+                        st.pyplot(fig)
                     
             except Exception as e:
                 st.error(f"Error processing image: {e}")
@@ -70,21 +79,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-    
-
-
-
-
-
-
-
-    
-
-
-
-
-

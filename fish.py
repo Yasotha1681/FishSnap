@@ -2,70 +2,75 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import tensorflow as tf
-import os
 import matplotlib.pyplot as plt
 
-# Load your CNN model
-model_path = 'C:/Users/SSNiTHAR/Desktop/ITBIN-2110-0126/test_model.h5'
-
-if os.path.isfile(model_path):
-    try:
-        model = tf.keras.models.load_model(model_path)
-        st.success("Model loaded successfully!")
-    except Exception as e:
-        st.error(f"Failed to load model: {e}")
-else:
-    st.error(f"Model file not found: {model_path}")
+# Load a pre-trained model (e.g., MobileNetV2)
+model = tf.keras.applications.MobileNetV2(weights='imagenet')
 
 def preprocess_image(image):
-    image = image.resize((32, 32))  # Resize to the size your model expects
-    image = np.array(image) / 255.0   # Normalize the image
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
-    return image
+    image = image.resize((224, 224))  # Resize image to match model input
+    image_array = np.array(image)
+    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array)
+    image_array = np.expand_dims(image_array, axis=0)
+    return image_array
 
 def identify_fish(image):
     processed_image = preprocess_image(image)
     predictions = model.predict(processed_image)
-    class_names = ["Fish1", "Fish2", "Fish3"]  # Replace with your class names
-    predicted_class = class_names[np.argmax(predictions)]
-    return predicted_class
+    decoded_predictions = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=5)[0]
+    return decoded_predictions
 
-# Main application logic
-st.title("Fish Identification App")
+def generate_chart(predictions):
+    # Extract top categories and their probabilities
+    categories = [pred[1] for pred in predictions]
+    probabilities = [pred[2] for pred in predictions]
+    
+    # Create a bar chart
+    fig, ax = plt.subplots()
+    ax.barh(categories, probabilities, color='skyblue')
+    ax.set_xlabel('Probability')
+    ax.set_title('Top Predicted Fish Species')
+    
+    return fig
 
-# Sidebar
-with st.sidebar:
-    st.header("Options")
-    option = st.selectbox("Choose an option", ["Upload Image", "Visualize Data"])
+def main():
+    st.title("Fish Identification App")
 
-# Containers
-container1 = st.container()
+    # Sidebar
+    st.sidebar.header("Options")
+    option = st.sidebar.selectbox("Choose an option", ["Upload Image", "View Data Visualization"])
 
-if option == "Upload Image":
-    with container1:
-        st.header("Upload Fish Image")
-        uploaded_file = st.file_uploader("Choose a fish image...", type=["jpg", "png", "jpeg"])
+    if option == "Upload Image":
+        st.header("Upload an Image")
+
+        # Image upload widget
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
         if uploaded_file is not None:
-            image = Image.open(uploaded_file)
-            st.image(image, caption='Uploaded Fish Image', use_column_width=True)
-
-            # Identify the fish
-            if 'model' in globals():
-                fish_name = identify_fish(image)
-                st.write(f"Identified Fish: {fish_name}")
-            else:
-                st.error("Model not loaded. Check the model path.")
-
-            st.success("Image uploaded and identified successfully!")
-
-elif option == "Visualize Data":
-    with container1:
+            try:
+                # Display uploaded image
+                image = Image.open(uploaded_file)
+                st.image(image, caption='Uploaded Image', use_column_width=True)
+                
+                # Display progress and status
+                with st.spinner("Identifying the fish..."):
+                    predictions = identify_fish(image)
+                    fish_name = predictions[0][1]  # Get the name of the top prediction
+                    st.write(f"Identified Fish: {fish_name}")
+                    
+                    # Display the chart with top predictions
+                    fig = generate_chart(predictions)
+                    st.pyplot(fig)
+                    
+            except Exception as e:
+                st.error(f"Error processing image: {e}")
+                
+    elif option == "View Data Visualization":
         st.header("Data Visualization")
-        st.subheader("Random Data")
-        data = np.random.randn(100)
-        fig, ax = plt.subplots()
-        ax.hist(data, bins=20)
-        st.pyplot(fig)
+
+if __name__ == "__main__":
+    main()
+
 
 
 
